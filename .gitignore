@@ -1,0 +1,16 @@
+# Secrets. Never commit this — it holds your API keys.
+.env
+.env.local
+
+node_modules/
+
+# Sermon text saved from the operator console. This is your own content, not
+# part of the app, and may be unpublished material.
+config/script.json
+
+.DS_Store
+*.log
+npm-debug.log*
+
+mobile/node_modules/
+mobile/.expo/

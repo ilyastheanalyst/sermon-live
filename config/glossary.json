@@ -1,0 +1,16 @@
+{
+  "en": [
+    { "from": "the community of believers", "to": "the ummah" },
+    { "from": "pious fear", "to": "taqwa" },
+    { "from": "alms", "to": "zakat" },
+    { "from": "the tradition of the Prophet", "to": "the Sunnah" },
+    { "from": "ritual prayer", "to": "salat" }
+  ],
+  "fr": [
+    { "from": "la communauté des croyants", "to": "la Oumma" },
+    { "from": "crainte pieuse", "to": "la taqwa" },
+    { "from": "aumône légale", "to": "la zakat" },
+    { "from": "la tradition du Prophète", "to": "la Sunna" },
+    { "from": "prière rituelle", "to": "la salat" }
+  ]
+}

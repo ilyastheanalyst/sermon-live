@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Live Translation",
+    "slug": "sermon-live",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#14161a",
+    "splash": {
+      "backgroundColor": "#14161a",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sermonlive.display"
+    },
+    "android": {
+      "package": "com.sermonlive.display",
+      "adaptiveIcon": {
+        "backgroundColor": "#14161a"
+      }
+    }
+  }
+}

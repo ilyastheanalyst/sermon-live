@@ -1,0 +1,18 @@
+{
+  "name": "Live Translation",
+  "short_name": "Translation",
+  "description": "Live French and English translation of the Friday khutbah",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14161a",
+  "theme_color": "#14161a",
+  "categories": ["education", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

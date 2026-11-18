@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operator console — sermon-live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14161a; --panel: #1c1f25; --panel-2: #23272e; --edge: #31363f;
+    --parchment: #f2ede3; --recede: #878d96; --signal: #7fa88b;
+    --warn: #c98a3e; --danger: #c96f5e; --scripture: #c7b285;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ink); color: var(--parchment);
+         font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 14px; line-height: 1.55; }
+
+  header { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap;
+           padding: 1.3rem 1.75rem 0.95rem; border-bottom: 1px solid var(--edge); }
+  header h1 { font-family: "Newsreader", serif; font-weight: 400; font-size: 1.3rem; margin: 0; }
+  header .meta { color: var(--recede); font-size: 0.78rem; letter-spacing: 0.03em; }
+
+  main { display: grid; grid-template-columns: 330px 1fr; gap: 1.6rem; padding: 1.6rem; max-width: 1440px; align-items: start; }
+  @media (max-width: 940px) { main { grid-template-columns: 1fr; } }
+
+  section { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px;
+            padding: 1.1rem 1.2rem; margin-bottom: 1.2rem; }
+  h2 { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em;
+       color: var(--recede); margin: 0 0 0.85rem; }
+  label { display: block; font-size: 0.76rem; color: var(--recede); margin-bottom: 0.28rem; }
+
+  select, input[type="text"], input[type="password"], textarea {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--edge); border-radius: 6px;
+    color: var(--parchment); font: inherit; padding: 0.48rem 0.58rem; margin-bottom: 0.8rem;
+  }
+  textarea { min-height: 170px; resize: vertical; line-height: 1.85; }
+  select:focus, input:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--signal); outline-offset: 1px; border-color: transparent;
+  }
+
+  .ar { font-family: "Noto Naskh Arabic", serif; direction: rtl; text-align: right; line-height: 2; }
+
+  button { font: inherit; font-weight: 500; background: var(--panel-2); color: var(--parchment);
+           border: 1px solid var(--edge); border-radius: 6px; padding: 0.46rem 0.85rem; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--recede); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: var(--signal); color: #10130f; border-color: var(--signal); }
+  button.stop { background: var(--danger); color: #1a0f0c; border-color: var(--danger); }
+
+  .row { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; }
+  .row > * { margin-bottom: 0; }
+
+  .pill { display: inline-flex; align-items: center; gap: 0.38rem; font-size: 0.73rem;
+          color: var(--recede); padding: 0.18rem 0.52rem; border: 1px solid var(--edge); border-radius: 999px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--recede); }
+  .dot.on { background: var(--signal); } .dot.bad { background: var(--warn); }
+
+  #meter { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin: 0.65rem 0 0.2rem; }
+  #meter-fill { height: 100%; width: 0%; background: var(--signal); transition: width 90ms linear; }
+  .note { font-size: 0.73rem; color: var(--recede); margin-top: 0.5rem; }
+  .error { color: var(--danger); font-size: 0.79rem; }
+
+  #partial { min-height: 2.8em; padding: 0.55rem 0.68rem; background: var(--panel-2);
+             border-radius: 6px; margin-bottom: 0.9rem; color: var(--recede); font-size: 1rem; }
+
+  .feed { display: flex; flex-direction: column-reverse; gap: 0.8rem; max-height: 440px; overflow-y: auto; }
+  .entry { border-inline-start: 2px solid var(--edge); padding-inline-start: 0.75rem; }
+  .entry.verse { border-inline-start-color: var(--scripture); }
+  .entry.script { border-inline-start-color: var(--signal); }
+  .entry.fallback { border-inline-start-color: var(--warn); }
+  .entry .tag { font-size: 0.63rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--recede); }
+  .entry .heard { font-size: 0.95rem; color: var(--recede); }
+  .entry .out { font-family: "Newsreader", serif; font-size: 1.05rem; }
+  .entry .out span { color: var(--recede); font-family: "IBM Plex Sans"; font-size: 0.62rem;
+                     letter-spacing: 0.08em; margin-inline-end: 0.45rem; }
+
+  .seg { display: flex; gap: 0.55rem; padding: 0.55rem 0; border-bottom: 1px solid var(--edge); align-items: flex-start; }
+  .seg:last-child { border-bottom: none; }
+  .seg .n { font-size: 0.68rem; color: var(--recede); width: 1.9rem; flex: none; padding-top: 0.35rem; cursor: pointer; }
+  .seg .texts { flex: 1; min-width: 0; }
+  .seg .src { font-size: 0.95rem; color: var(--recede); }
+  .seg .t { font-family: "Newsreader", serif; font-size: 0.98rem; padding: 0.12rem 0.2rem; border-radius: 3px; }
+  .seg .t:focus { outline: 2px solid var(--signal); }
+  .seg.current { background: rgba(127, 168, 139, 0.09); border-radius: 4px; }
+  .seg.locked .t { color: var(--scripture); font-style: italic; }
+  .badge { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+           color: var(--scripture); border: 1px solid currentColor; border-radius: 999px;
+           padding: 0.03rem 0.4rem; margin-inline-start: 0.4rem; }
+  #segments { max-height: 400px; overflow-y: auto; }
+  #gate { max-width: 340px; margin: 5rem auto; }
+
+  #banner {
+    display: none;
+    margin: 0 1.6rem 0;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--warn);
+    border-radius: 8px;
+    background: rgba(201, 138, 62, 0.1);
+    font-size: 0.85rem;
+  }
+  #banner.show { display: block; }
+  #banner.good { border-color: var(--signal); background: rgba(127, 168, 139, 0.1); }
+  #banner b { display: block; font-weight: 600; margin-bottom: 0.2rem; }
+  #banner span { color: var(--recede); font-size: 0.79rem; }
+  a { color: var(--signal); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Operator console</h1>
+  <span class="meta" id="meta">—</span>
+</header>
+
+<div id="gate">
+  <section>
+    <h2>Sign in</h2>
+    <label for="pw">Operator password</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <button class="primary" id="signin">Sign in</button>
+    <p class="error" id="gate-error"></p>
+  </section>
+</div>
+
+<div id="banner"></div>
+
+<main id="app" hidden>
+  <div>
+    <section>
+      <h2>Session</h2>
+
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="live">Listen and translate live</option>
+        <option value="script">Follow the prepared khutbah</option>
+      </select>
+
+      <label for="dialect">Arabic model</label>
+      <select id="dialect">
+        <option value="ar">General Arabic (MSA) — start here</option>
+        <option value="ar-EG">Egyptian</option>
+        <option value="ar-SA">Gulf / Saudi</option>
+        <option value="ar-MA">Moroccan / Maghrebi</option>
+        <option value="ar-LV">Levantine</option>
+      </select>
+
+      <label for="mic">Audio source</label>
+      <select id="mic"></select>
+
+      <div id="meter"><div id="meter-fill"></div></div>
+      <p class="note" id="meter-note">Use the mixer feed, not the laptop microphone.</p>
+
+      <div class="row" style="margin-top:0.95rem">
+        <button class="primary" id="start">Start</button>
+        <button class="stop" id="stop" disabled>Stop</button>
+      </div>
+
+      <div class="row" style="margin-top:0.85rem">
+        <span class="pill"><span class="dot" id="d-conn"></span><span id="s-conn">Offline</span></span>
+        <span class="pill"><span class="dot" id="d-eng"></span><span id="s-eng">Idle</span></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Screens</h2>
+      <p class="note" style="margin-top:0">Projector — shows French and English side by side:</p>
+      <input type="text" id="url-both" readonly>
+      <p class="note" style="margin-top:0">Phones — people pick their own language:</p>
+      <input type="text" id="url-phone" readonly>
+      <div class="row">
+        <button id="open-both">Open projector view</button>
+        <button id="clear">Clear screens</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Send a line manually</h2>
+      <label for="m-fr">Français</label>
+      <input type="text" id="m-fr" placeholder="Annonce en français">
+      <label for="m-en">English</label>
+      <input type="text" id="m-en" placeholder="Announcement in English">
+      <button id="push">Send to screens</button>
+      <p class="note">For announcements, or to correct something badly mis-heard.</p>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>What it is hearing</h2>
+      <div id="partial" class="ar">—</div>
+      <div class="feed" id="feed"></div>
+    </section>
+
+    <section>
+      <h2>Prepared khutbah</h2>
+      <textarea id="script-text" class="ar" placeholder="الصق نص الخطبة هنا"></textarea>
+      <div class="row">
+        <button class="primary" id="prepare">Split and translate</button>
+        <span class="note" id="prepare-note"></span>
+      </div>
+      <p class="note">
+        Qur'anic quotations are detected and filled from the verse library — they are never
+        machine translated and cannot be edited here. Everything else is machine translated
+        once, now. Review it before Friday; click any line to edit.
+      </p>
+      <div id="segments"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let password = '', socket = null, recorder = null, audioCtx = null, meterRaf = null;
+
+  $('signin').onclick = () => { password = $('pw').value; openSocket(); };
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('signin').click(); });
+
+  function openSocket() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    socket = new WebSocket(`${proto}://${location.host}/ws/control?password=${encodeURIComponent(password)}`);
+
+    socket.onopen = () => {
+      $('gate').hidden = true;
+      $('app').hidden = false;
+      $('d-conn').className = 'dot on';
+      $('s-conn').textContent = 'Connected';
+      $('url-both').value = `${location.origin}/?lang=both`;
+      $('url-phone').value = `${location.origin}/`;
+      listMics();
+      loadScript();
+    };
+
+    socket.onclose = () => {
+      $('d-conn').className = 'dot';
+      $('s-conn').textContent = 'Offline';
+      if (!$('app').hidden === false) $('gate-error').textContent = 'That password was not accepted.';
+    };
+
+    socket.onmessage = (e) => handle(JSON.parse(e.data));
+  }
+
+  function handle(msg) {
+    switch (msg.type) {
+      case 'status':
+        $('meta').textContent =
+          `speech: ${msg.engine} · translation: ${msg.translator} · ${msg.verseCount} verses · ${msg.segmentCount} script lines`;
+        $('start').disabled = msg.running;
+        $('stop').disabled = !msg.running;
+        if (msg.translation) showHealth({ ...msg.translation, providers: msg.providers });
+        break;
+      case 'engine':
+        $('d-eng').className = 'dot ' + (msg.state === 'listening' ? 'on' : 'bad');
+        $('s-eng').textContent = msg.state === 'listening' ? `Listening (${msg.engine})` : msg.state;
+        break;
+      case 'health': showHealth(msg); break;
+      case 'partial': $('partial').textContent = msg.text; break;
+      case 'heard': $('partial').textContent = '—'; break;
+      case 'line': addEntry(msg); break;
+      case 'pointer': markCurrent(msg.index); break;
+    }
+  }
+
+  function showHealth(h) {
+    const el = $('banner');
+
+    if (h.lastError) {
+      el.className = 'banner show';
+      el.innerHTML = '<b></b><span></span>';
+      el.querySelector('b').textContent = `Not translating — ${h.lastError.message}`;
+      el.querySelector('span').textContent = h.lastError.hint || '';
+      return;
+    }
+
+    if (h.activeProvider) {
+      el.className = 'banner show good';
+      el.innerHTML = '<b></b>';
+      el.querySelector('b').textContent = `Translating via ${h.activeProvider}`;
+      setTimeout(() => { if (el.classList.contains('good')) el.classList.remove('show'); }, 4000);
+      return;
+    }
+
+    el.classList.remove('show');
+  }
+
+  function addEntry(line) {
+    const kind = line.origin === 'verse' ? 'verse'
+      : line.origin === 'script' ? 'script'
+      : line.origin === 'live-fallback' ? 'fallback' : '';
+
+    const tag = line.origin === 'verse' ? `Qur'an ${line.ref} · matched ${line.score}`
+      : line.origin === 'script' ? `script line · ${line.score}`
+      : line.origin === 'live-fallback' ? `off script · best ${line.score}`
+      : line.origin === 'manual' ? 'manual'
+      : line.degraded ? 'live · translation degraded' : 'live';
+
+    const el = document.createElement('div');
+    el.className = `entry ${kind}`;
+    el.innerHTML = `<div class="tag"></div><div class="heard ar"></div>
+      <div class="out"><span>FR</span><b class="fr"></b></div>
+      <div class="out"><span>EN</span><b class="en"></b></div>`;
+    el.querySelector('.tag').textContent = tag;
+    el.querySelector('.heard').textContent = line.ar || '';
+    el.querySelector('.fr').textContent = line.fr || '';
+    el.querySelector('.en').textContent = line.en || '';
+
+    const feed = $('feed');
+    feed.prepend(el);
+    while (feed.children.length > 40) feed.lastChild.remove();
+  }
+
+  async function listMics() {
+    try { await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch { $('meter-note').textContent = 'Microphone access was blocked. Allow it and reload.'; return; }
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    $('mic').innerHTML = devices.filter((d) => d.kind === 'audioinput')
+      .map((d, i) => `<option value="${d.deviceId}">${d.label || `Input ${i + 1}`}</option>`).join('');
+  }
+
+  async function startAudio() {
+    const deviceId = $('mic').value;
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        // A mixer feed is already clean. Browser cleanup fights it and
+        // clips the front of words, which matters more in Arabic where
+        // short function words carry grammatical weight.
+        echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1,
+      },
+    });
+
+    audioCtx = new AudioContext();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+
+    const tick = () => {
+      analyser.getByteTimeDomainData(buf);
+      let peak = 0;
+      for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+      $('meter-fill').style.width = `${Math.min(100, (peak / 128) * 180)}%`;
+      meterRaf = requestAnimationFrame(tick);
+    };
+    tick();
+
+    recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0 && socket?.readyState === 1) socket.send(e.data);
+    };
+    recorder.start(250);
+  }
+
+  function stopAudio() {
+    if (recorder) { recorder.stream.getTracks().forEach((t) => t.stop()); recorder.stop(); recorder = null; }
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    cancelAnimationFrame(meterRaf);
+    $('meter-fill').style.width = '0%';
+  }
+
+  $('start').onclick = async () => {
+    socket.send(JSON.stringify({ action: 'start', mode: $('mode').value, dialect: $('dialect').value }));
+    try { await startAudio(); }
+    catch (e) { $('meter-note').textContent = `Could not open that input: ${e.message}`; }
+  };
+  $('stop').onclick = () => { socket.send(JSON.stringify({ action: 'stop' })); stopAudio(); };
+  $('clear').onclick = () => socket.send(JSON.stringify({ action: 'clear' }));
+  $('open-both').onclick = () => window.open('/?lang=both', '_blank');
+
+  $('push').onclick = () => {
+    const fr = $('m-fr').value.trim(), en = $('m-en').value.trim();
+    if (!fr && !en) return;
+    socket.send(JSON.stringify({ action: 'push', fr, en }));
+    $('m-fr').value = ''; $('m-en').value = '';
+  };
+
+  async function loadScript() {
+    const res = await fetch('/api/script');
+    renderSegments((await res.json()).segments || []);
+  }
+
+  $('prepare').onclick = async () => {
+    const text = $('script-text').value;
+    if (!text.trim()) { $('prepare-note').textContent = 'Paste the khutbah first.'; return; }
+
+    $('prepare').disabled = true;
+    $('prepare-note').textContent = 'Translating…';
+
+    const res = await fetch('/api/script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-operator-password': password },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    $('prepare').disabled = false;
+
+    if (!res.ok) { $('prepare-note').textContent = data.error; return; }
+
+    const verses = data.segments.filter((s) => s.isVerse).length;
+    $('prepare-note').textContent =
+      `${data.segments.length} lines · ${verses} from the verse library`;
+    renderSegments(data.segments);
+  };
+
+  function renderSegments(segments) {
+    const host = $('segments');
+    host.replaceChildren();
+
+    segments.forEach((seg, i) => {
+      const row = document.createElement('div');
+      row.className = 'seg' + (seg.isVerse ? ' locked' : '');
+      row.dataset.index = i;
+      row.innerHTML = `<div class="n"></div><div class="texts">
+        <div class="src ar"></div>
+        <div class="t fr"></div><div class="t en"></div></div>`;
+
+      row.querySelector('.n').textContent = String(i + 1).padStart(2, '0');
+      row.querySelector('.n').title = 'Jump the tracker to this line';
+      row.querySelector('.n').onclick = () => socket.send(JSON.stringify({ action: 'seek', index: i }));
+      row.querySelector('.src').textContent = seg.source;
+
+      for (const lang of ['fr', 'en']) {
+        const cell = row.querySelector(`.t.${lang}`);
+        cell.textContent = seg[lang];
+        if (seg.isVerse) {
+          if (lang === 'fr') {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.textContent = `Qur'an ${seg.ref}`;
+            cell.appendChild(badge);
+          }
+        } else {
+          cell.contentEditable = 'true';
+          cell.spellcheck = true;
+          cell.lang = lang;
+          cell.addEventListener('blur', () => saveSegment(i, lang, cell.textContent));
+        }
+      }
+
+      host.appendChild(row);
+    });
+  }
+
+  async function saveSegment(index, lang, value) {
+    await fetch(`/api/script/${index}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-operator-password': password },
+      body: JSON.stringify({ [lang]: value }),
+    });
+  }
+
+  function markCurrent(index) {
+    document.querySelectorAll('.seg.current').forEach((el) => el.classList.remove('current'));
+    const row = document.querySelector(`.seg[data-index="${index}"]`);
+    if (row) { row.classList.add('current'); row.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  }
+})();
+</script>
+</body>
+</html>

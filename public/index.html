@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live translation</title>
+<meta name="description" content="Live French and English translation of the Friday khutbah">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#14161a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Translation">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,400&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14161a;
+    --parchment: #f2ede3;
+    --recede: #6f757e;
+    --rule: #31363f;
+    --signal: #7fa88b;
+    --warn: #c98a3e;
+    --scripture: #c7b285;
+    --scale: 1;
+  }
+
+  [data-theme="light"] {
+    --ink: #f6f3ec; --parchment: #1a1c20; --recede: #948f84;
+    --rule: #d8d2c4; --signal: #4a7a56; --scripture: #8a6d33;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%; margin: 0;
+    background: var(--ink); color: var(--parchment);
+    font-family: "Newsreader", Georgia, serif;
+    overflow: hidden; -webkit-font-smoothing: antialiased;
+    transition: background 400ms ease, color 400ms ease;
+  }
+
+  /* Headers pinned at the top so nobody has to work out which side is which. */
+  #heads {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: grid; gap: 0 clamp(1.5rem, 4vw, 4rem);
+    padding: calc(2.4vh + env(safe-area-inset-top)) clamp(1.25rem, 5vw, 6rem) 0;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: clamp(0.62rem, 0.85vw, 0.78rem);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--recede);
+  }
+  #heads span:nth-child(2) { text-align: center; }
+
+  /* Rows stack from the bottom. Each row holds one translation pair, so
+     French and English stay locked together even when one wraps longer. */
+  #stage {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    gap: clamp(0.6rem, 2vh, 1.6rem);
+    padding: calc(8vh + env(safe-area-inset-top)) calc(clamp(1.25rem, 5vw, 6rem) + env(safe-area-inset-right))
+             calc(11vh + env(safe-area-inset-bottom)) calc(clamp(1.25rem, 5vw, 6rem) + env(safe-area-inset-left));
+  }
+
+  .row {
+    display: grid;
+    gap: 0 clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+    animation: arrive 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  body[data-cols="2"] #heads,
+  body[data-cols="2"] .row { grid-template-columns: 1fr 1px 1fr; }
+
+  body[data-cols="1"] #heads { display: none; }
+  body[data-cols="1"] .row { grid-template-columns: 1fr; }
+  body[data-cols="1"] .rule { display: none; }
+
+  .rule { background: var(--rule); align-self: stretch; }
+
+  .cell {
+    font-size: calc(clamp(1.1rem, 2.3vw, 2.5rem) * var(--scale));
+    line-height: 1.26; letter-spacing: -0.011em;
+    text-wrap: balance; min-width: 0;
+  }
+
+  body[data-cols="1"] .cell { font-size: calc(clamp(1.4rem, 3.6vw, 3.6rem) * var(--scale)); }
+
+  .row[data-age="1"] { opacity: 0.45; }
+  .row[data-age="2"] { opacity: 0.19; }
+  .row[data-age="3"] { opacity: 0.07; }
+
+  .row[data-age="1"] .cell { font-size: calc(clamp(0.95rem, 1.85vw, 2rem) * var(--scale)); }
+  .row[data-age="2"] .cell { font-size: calc(clamp(0.85rem, 1.5vw, 1.65rem) * var(--scale)); }
+  .row[data-age="3"] .cell { font-size: calc(clamp(0.8rem, 1.35vw, 1.5rem) * var(--scale)); }
+
+  body[data-cols="1"] .row[data-age="1"] .cell { font-size: calc(clamp(1.1rem, 2.6vw, 2.6rem) * var(--scale)); }
+  body[data-cols="1"] .row[data-age="2"] .cell { font-size: calc(clamp(0.95rem, 2.1vw, 2.1rem) * var(--scale)); }
+  body[data-cols="1"] .row[data-age="3"] .cell { font-size: calc(clamp(0.9rem, 1.9vw, 1.8rem) * var(--scale)); }
+
+  /* Scripture reads as scripture at a glance — italic, warm, ruled. */
+  .row.verse .cell {
+    font-style: italic; color: var(--scripture);
+    border-inline-start: 2px solid currentColor;
+    border-radius: 0; padding-inline-start: 0.6em;
+  }
+
+  .ref {
+    display: block; font-family: "IBM Plex Sans", sans-serif;
+    font-style: normal; font-size: 0.42em; letter-spacing: 0.09em;
+    opacity: 0.72; margin-top: 0.5em;
+  }
+
+  .row.manual .cell { color: var(--signal); }
+
+  @keyframes arrive { from { opacity: 0; transform: translateY(0.4em); } }
+  @media (prefers-reduced-motion: reduce) { .row { animation: none; } }
+
+  #idle {
+    position: absolute; inset: 0;
+    display: grid; place-content: center; text-align: center;
+    gap: 0.8rem; padding: 2rem; transition: opacity 500ms ease;
+  }
+  #idle h1 { font-weight: 300; font-size: clamp(1.5rem, 3.6vw, 3rem); margin: 0; letter-spacing: -0.02em; }
+  #idle p { font-family: "IBM Plex Sans", sans-serif; font-size: 0.85rem; color: var(--recede); margin: 0; }
+  .hidden { opacity: 0 !important; pointer-events: none; }
+
+  #bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 0.85rem clamp(1.25rem, 5vw, 6rem) calc(0.85rem + env(safe-area-inset-bottom));
+    border-top: 0.5px solid var(--rule);
+    font-family: "IBM Plex Sans", sans-serif; font-size: 0.75rem;
+    color: var(--recede); letter-spacing: 0.03em;
+    transition: opacity 700ms ease;
+  }
+  #bar.dim { opacity: 0; }
+  body:hover #bar { opacity: 1; }
+
+  #dot { width: 7px; height: 7px; border-radius: 50%; background: var(--recede); flex: none; }
+  #dot.live { background: var(--signal); animation: pulse 2.4s ease-in-out infinite; }
+  #dot.lost { background: var(--warn); }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  .spacer { flex: 1; }
+
+  button {
+    font: inherit; color: var(--recede); background: none;
+    border: 1px solid currentColor; border-radius: 999px;
+    padding: 0.24rem 0.68rem; cursor: pointer;
+  }
+  button:hover { color: var(--parchment); }
+  button[aria-pressed="true"] { color: var(--ink); background: var(--parchment); border-color: var(--parchment); }
+  button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .group { display: flex; gap: 0.3rem; }
+
+  /* Two columns of small text across a phone is unreadable — collapse to
+     one and let the viewer pick their language instead. */
+  /* Install hint. Sits above the bar, out of the way, dismissible, and
+     never shown once the app is running from the home screen. */
+  #install {
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    top: calc(1rem + env(safe-area-inset-top));
+    z-index: 5;
+    display: none;
+    align-items: center; gap: 0.7rem;
+    max-width: calc(100% - 2rem);
+    padding: 0.6rem 0.7rem 0.6rem 0.9rem;
+    border: 1px solid var(--rule); border-radius: 999px;
+    background: var(--ink);
+    font-family: "IBM Plex Sans", sans-serif; font-size: 0.78rem;
+    color: var(--recede);
+  }
+  #install.show { display: flex; }
+  #install strong { color: var(--parchment); font-weight: 500; }
+  #install button { padding: 0.2rem 0.6rem; font-size: 0.72rem; }
+  #install .close { border: none; font-size: 1rem; line-height: 1; padding: 0 0.2rem; }
+
+  @media (max-width: 760px) {
+    #stage { padding: 3vh 1.1rem calc(9vh + env(safe-area-inset-bottom)); }
+    #heads { display: none !important; }
+    body[data-cols="2"] .row { grid-template-columns: 1fr; }
+    body[data-cols="2"] .rule, body[data-cols="2"] .cell.en { display: none; }
+    .row[data-age="3"] { display: none; }
+  }
+</style>
+</head>
+<body data-cols="2">
+
+<div id="heads"><span>Français</span><span></span><span>English</span></div>
+
+<div id="stage" aria-live="polite"></div>
+
+<div id="idle">
+  <h1>Live translation</h1>
+  <p id="idle-note">Waiting for the khutbah to begin</p>
+</div>
+
+<div id="install">
+  <span id="install-text"></span>
+  <button id="install-go" hidden>Install</button>
+  <button class="close" id="install-close" aria-label="Dismiss">×</button>
+</div>
+
+<div id="bar">
+  <span id="dot" aria-hidden="true"></span>
+  <span id="state">Connecting</span>
+  <span class="spacer"></span>
+  <span class="group" role="group" aria-label="Language">
+    <button data-lang="both">Both</button>
+    <button data-lang="fr">Français</button>
+    <button data-lang="en">English</button>
+  </span>
+  <span class="group">
+    <button id="smaller" aria-label="Smaller text">A−</button>
+    <button id="bigger" aria-label="Larger text">A+</button>
+    <button id="theme">Light</button>
+  </span>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+  const MAX = 4;
+  const params = new URLSearchParams(location.search);
+
+  const prefs = {
+    // Two columns is now the default. A phone can switch to one language.
+    lang: params.get('lang') || localStorage.getItem('sl-lang') || 'both',
+    scale: Number(localStorage.getItem('sl-scale')) || 1,
+    theme: localStorage.getItem('sl-theme') || 'dark',
+  };
+
+  function applyPrefs() {
+    document.body.dataset.cols = prefs.lang === 'both' ? '2' : '1';
+    document.documentElement.style.setProperty('--scale', prefs.scale);
+    document.documentElement.dataset.theme = prefs.theme;
+    $('theme').textContent = prefs.theme === 'dark' ? 'Light' : 'Dark';
+
+    // In single-language mode, hide the column the viewer didn't pick.
+    stage.querySelectorAll('.cell').forEach((c) => {
+      c.hidden = prefs.lang !== 'both' && !c.classList.contains(prefs.lang);
+    });
+
+    document.querySelectorAll('[data-lang]').forEach((b) =>
+      b.setAttribute('aria-pressed', b.dataset.lang === prefs.lang)
+    );
+
+    localStorage.setItem('sl-lang', prefs.lang);
+    localStorage.setItem('sl-scale', prefs.scale);
+    localStorage.setItem('sl-theme', prefs.theme);
+  }
+
+  document.querySelectorAll('[data-lang]').forEach((b) => {
+    b.onclick = () => { prefs.lang = b.dataset.lang; applyPrefs(); };
+  });
+  $('bigger').onclick = () => { prefs.scale = Math.min(2, prefs.scale + 0.12); applyPrefs(); };
+  $('smaller').onclick = () => { prefs.scale = Math.max(0.5, prefs.scale - 0.12); applyPrefs(); };
+  $('theme').onclick = () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; applyPrefs(); };
+  applyPrefs();
+
+  let dimTimer;
+  const nudge = () => {
+    $('bar').classList.remove('dim');
+    clearTimeout(dimTimer);
+    dimTimer = setTimeout(() => $('bar').classList.add('dim'), 5000);
+  };
+  ['mousemove', 'touchstart', 'keydown'].forEach((e) =>
+    window.addEventListener(e, nudge, { passive: true })
+  );
+  nudge();
+
+  function cell(text, lang, ref) {
+    const el = document.createElement('div');
+    el.className = `cell ${lang}`;
+    el.lang = lang;
+    el.dir = 'auto';
+    el.textContent = text || '';
+    if (ref) {
+      const r = document.createElement('span');
+      r.className = 'ref';
+      r.textContent = `Qur'an ${ref}`;
+      el.appendChild(r);
+    }
+    el.hidden = prefs.lang !== 'both' && lang !== prefs.lang;
+    return el;
+  }
+
+  function addLine(line) {
+    if (!line.fr && !line.en) return;
+
+    const row = document.createElement('div');
+    row.className = 'row' + (line.origin === 'verse' ? ' verse' : line.origin === 'manual' ? ' manual' : '');
+
+    const rule = document.createElement('div');
+    rule.className = 'rule';
+
+    row.append(cell(line.fr, 'fr', line.ref), rule, cell(line.en, 'en', line.ref));
+    stage.appendChild(row);
+
+    // Age the rows so older pairs recede together, never independently.
+    [...stage.children].reverse().forEach((el, i) => {
+      if (i >= MAX) el.remove();
+      else el.dataset.age = i;
+    });
+
+    $('idle').classList.add('hidden');
+  }
+
+  function clearLines() {
+    stage.replaceChildren();
+    $('idle').classList.remove('hidden');
+  }
+
+  const setState = (t, c) => { $('state').textContent = t; $('dot').className = c || ''; };
+
+  let socket, retry = 0;
+
+  function connect() {
+    socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/display`);
+    socket.onopen = () => { retry = 0; setState('Connected', ''); };
+
+    socket.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      switch (msg.type) {
+        case 'hello':
+          msg.history?.forEach(addLine);
+          setState(msg.running ? 'Live' : 'Standing by', msg.running ? 'live' : '');
+          break;
+        case 'line': addLine(msg); break;
+        case 'session':
+          setState(msg.running ? 'Live' : 'Ended', msg.running ? 'live' : '');
+          if (msg.running) { clearLines(); $('idle-note').textContent = 'Listening'; }
+          break;
+        case 'connection': setState(msg.ok ? 'Live' : 'Reconnecting to audio', msg.ok ? 'live' : 'lost'); break;
+        case 'clear': clearLines(); break;
+      }
+    };
+
+    socket.onclose = () => {
+      setState('Reconnecting', 'lost');
+      retry = Math.min(retry + 1, 6);
+      setTimeout(connect, 400 * 2 ** retry);
+    };
+    socket.onerror = () => socket.close();
+  }
+
+  connect();
+
+  /* ---- installable app ---- */
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  const installBox = $('install');
+  let deferredPrompt = null;
+
+  function showInstall(text, withButton) {
+    if (standalone || localStorage.getItem('sl-install-dismissed')) return;
+    $('install-text').innerHTML = text;
+    $('install-go').hidden = !withButton;
+    installBox.classList.add('show');
+  }
+
+  $('install-close').onclick = () => {
+    installBox.classList.remove('show');
+    localStorage.setItem('sl-install-dismissed', '1');
+  };
+
+  // Chrome and Edge hand us a real install prompt.
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstall('Add this to your home screen', true);
+  });
+
+  $('install-go').onclick = async () => {
+    if (!deferredPrompt) return;
+    installBox.classList.remove('show');
+    deferredPrompt.prompt();
+    deferredPrompt = null;
+  };
+
+  window.addEventListener('appinstalled', () => installBox.classList.remove('show'));
+
+  // iOS has no install prompt at all, so Safari users get the two taps
+  // spelled out instead. Only Safari can do it — Chrome on iOS cannot.
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+
+  if (isIOS && isSafari) {
+    setTimeout(() => showInstall('Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>', false), 2500);
+  }
+
+  if ('wakeLock' in navigator) {
+    const hold = () => navigator.wakeLock.request('screen').catch(() => {});
+    hold();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') hold();
+    });
+  }
+})();
+</script>
+</body>
+</html>
