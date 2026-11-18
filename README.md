@@ -224,6 +224,51 @@ For the icon, edit the colours or row lengths near the top of
 
 ---
 
+## Running it without a laptop
+
+Everything above needs a laptop on the wifi running `npm start`. To have it
+just work — open it on a phone, anywhere, nothing else running — deploy it.
+
+**Render's free tier** does this. Permanent HTTPS address, no card required.
+
+1. Go to [dashboard.render.com](https://dashboard.render.com) and sign in with
+   GitHub.
+2. **New → Blueprint**, pick this repository. Render reads `render.yaml` and
+   configures itself.
+3. It asks for four values. Paste your keys:
+   - `OPERATOR_PASSWORD` — pick something, this guards the console
+   - `ANTHROPIC_API_KEY`
+   - `DEEPGRAM_API_KEY`
+   - `DEEPL_API_KEY` — optional, but a second provider means one failing
+     doesn't put Arabic on the screen
+4. Deploy. A few minutes later you have an address like
+   `https://sermon-live.onrender.com`.
+
+The keys live in Render's dashboard, never in the repo.
+
+### What the free tier costs you
+
+It sleeps after 15 minutes with no traffic and takes about a minute to wake.
+For a weekly khutbah that's manageable: open the console ten minutes early,
+wait out the wake, and the websocket traffic keeps it up for the rest of the
+hour. The paid tier at $7/month removes the sleep entirely.
+
+It also has no persistent disk, so a khutbah you prepare in the console is
+lost on restart. Paste it in on the day, or pay for the disk.
+
+### Afterwards
+
+The display is at your Render address, the console at
+`<your-address>/control.html`. Share the display address with the congregation
+— they can add it to their home screen as before, and now it works whether or
+not your laptop is anywhere nearby.
+
+One thing that does still need the laptop: the microphone. The console runs in
+a browser on whatever machine is plugged into the mixer, and that machine
+sends audio up to the server. Hosting moves the server, not the microphone.
+
+---
+
 ## Things that will bite you
 
 **Latency.** 2–4 seconds behind the speaker, and longer for the first line

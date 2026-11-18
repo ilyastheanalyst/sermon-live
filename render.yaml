@@ -1,0 +1,38 @@
+# Deploy config for Render. With this file in the repo, Render's Blueprint
+# flow reads it and sets the service up without you filling in a form.
+#
+# The API keys are deliberately NOT here — `sync: false` makes Render ask for
+# each one in its dashboard, so they live there and never touch the repo.
+
+services:
+  - type: web
+    name: sermon-live
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+      # Set these in the Render dashboard.
+      - key: OPERATOR_PASSWORD
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEEPL_API_KEY
+        sync: false
+
+      - key: DEEPGRAM_MODEL
+        value: nova-3
+      - key: ARABIC_DIALECT
+        value: ar
+      - key: TRANSLATE_PROVIDER
+        value: claude
+      - key: CLAUDE_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: DEEPL_API_URL
+        value: https://api-free.deepl.com/v2/translate
